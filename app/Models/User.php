@@ -34,6 +34,13 @@ class User extends Authenticatable
         'password' => 'hashed',
     ]; */
 
+    # relaciones
+
+    public function administrativo()
+    {
+        return $this->hasOne(Administrativo::class, 'id_usuario');
+    }
+
     # mutadores
 
     public function setNombreAttribute($value)
