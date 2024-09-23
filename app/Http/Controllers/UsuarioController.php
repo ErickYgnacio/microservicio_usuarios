@@ -92,7 +92,7 @@ class UsuarioController extends Controller
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
 
-        return response()->json($user, 200);
+        return response()->json($user->load('administrativo'), 200);
     }
 
     public function update(UsuarioUpdateRequest $request, User $user)
@@ -101,10 +101,29 @@ class UsuarioController extends Controller
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
 
+        if(!$user->administrativo) {
+            return response()->json(['message' => 'Usuario no es administrativo'], 404);
+        }
+
         DB::beginTransaction();
         try {
             $validated = $request->validated();
+            unset($validated['categoria']);
+            unset($validated['seguro']);
             $user->update($validated);
+
+
+            if ($request->has('categoria')) {
+                $user->administrativo->update([
+                    'categoria' => $request->categoria
+                ]);
+            }
+
+            if ($request->has('seguro')) {
+                $user->administrativo->update([
+                    'seguro' => $request->seguro
+                ]);
+            }
             DB::commit();
             return response()->json([
                 'message' => 'Usuario actualizado exitosamente',
@@ -125,8 +144,19 @@ class UsuarioController extends Controller
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
 
-        $user->delete();
-
-        return response()->json(['message' => 'Usuario eliminado exitosamente'], 200);
+        DB::beginTransaction();
+        try {
+            $administrativo = $user->administrativo;
+            $user->delete();
+            $administrativo->delete();
+            DB::commit();
+            return response()->json(['message' => 'Usuario eliminado exitosamente'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Error al eliminar el usuario',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

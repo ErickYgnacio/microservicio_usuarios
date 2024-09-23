@@ -25,9 +25,9 @@ class User extends Authenticatable
         'contrasenia'
     ];
 
-    protected $hidden = [
+    /* protected $hidden = [
         'contrasenia'
-    ];
+    ]; */
 
     /* protected $casts = [
         'email_verified_at' => 'datetime',
